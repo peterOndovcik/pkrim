@@ -246,27 +246,31 @@ namespace pokri {
 #pragma endregion
 	private: System::Void MyForm_Load(System::Object^  sender, System::EventArgs^  e) {
 				 	
-			
-			
+	
 				//////////////////////////////////////////////////////////
 				///////////////////prerobit///////////////////////////////
 				//////treba cechovakt v exception delenie nulov////////////////////
-				 string output=getKey();
-				if(output.compare(getNormString(key))==0){
-					activatedToolStripMenuItem->Text="activated";
-				}
-			/////////////////////////prerobit////////////////////////////
-				////////////////////////////////////////////////////////
+				try{
+					throw 20;
+				 }
+				 catch(int e){
+								key="SKMKR";
+								 string output=getKey(); 
+								if(output.compare(getNormString(key))==0){
+									activatedToolStripMenuItem->Text="activated";
+								}
+							/////////////////////////prerobit////////////////////////////
+								////////////////////////////////////////////////////////
 			
 
-			button1->Text=getTextForButton1();
-			button2->Text=getTextForButton2();
-			button3->Text=getTextForButton3();
-			if(activatedToolStripMenuItem->Text=="activated"){
-				Controls->Remove(this->button1);
-				Controls->Remove(this->button3);
-			}
-			 
+							button1->Text=getTextForButton1();
+							button2->Text=getTextForButton2();
+							button3->Text=getTextForButton3();
+							if(activatedToolStripMenuItem->Text=="activated"){
+								Controls->Remove(this->button1);
+								Controls->Remove(this->button3);
+							}
+					} 
 			 }
 	private: string getKey(){
 				
@@ -274,7 +278,8 @@ namespace pokri {
 			file.open("b12869741cbe5a47cdb6693fa.bin", ios::in |  ios::binary);
 			if(!file.is_open()){
 				fstream outfile ("b12869741cbe5a47cdb6693fa.bin", ios::binary);
-				return NULL;
+				
+				return "key";
 			}
 			else{
 				string keyIN;
@@ -387,44 +392,52 @@ private: System::Void button3_Click(System::Object^  sender, System::EventArgs^ 
 			 //////////////////////////////////////////////
 			 //////////////prerobit//////////////////////
 			 //////treba cechovakt v exception delenie nulov////////////////////
-
-			 if(normKeyIN.compare(getNormString(key))==0){
-			
-			/////////////prerobit///////////////////////////
-			//////////////////////////////////////////////////////
-			
-				 ofstream file;
-				 file.open("b12869741cbe5a47cdb6693fa.bin",ios::binary);
-				 
-				 if(file.is_open()){
-					 string banan="tu mas banan a sicko v poradku";
-					 string tukabel="tukabel";
-					 
-					 string spiska="do spiskej do bordelu";
-					 for (std::size_t i = 0; i < banan.size(); ++i)
-					 {
-						 file << bitset<64>(banan.c_str()[i]);
-					}
-					file<<endl;
-					for (std::size_t i = 0; i < normKeyIN.size(); ++i)
-					 {
-						 file << bitset<64>(normKeyIN.c_str()[i]);
-					}
-					file<<endl;
-					for (std::size_t i = 0; i < spiska.size(); ++i)
-					 {
-						 file << bitset<64>(spiska.c_str()[i]);
-					}
-					file<<endl;
-					activatedToolStripMenuItem->Text="activated";
-					button1->Visible=false;
-					textBox4->Visible=false;
-					button3->Visible=false;
-				 }
+			 try{
+				throw 20;
 			 }
+			 catch(int e){
+					 if(normKeyIN.compare(getNormString(key))==0){
+			
+					/////////////prerobit///////////////////////////
+					//////////////////////////////////////////////////////
+			
+						 ofstream file;
+						 file.open("b12869741cbe5a47cdb6693fa.bin",ios::binary);
+				 
+						 if(file.is_open()){
+							 string banan="tu mas banan a sicko v poradku";
+							 string tukabel="tukabel";
+					 
+							 string spiska="do spiskej do bordelu";
+							 for (std::size_t i = 0; i < banan.size(); ++i)
+							 {
+								 file << bitset<64>(banan.c_str()[i]);
+							}
+							file<<endl;
+							for (std::size_t i = 0; i < normKeyIN.size(); ++i)
+							 {
+								 file << bitset<64>(normKeyIN.c_str()[i]);
+							}
+							file<<endl;
+							for (std::size_t i = 0; i < spiska.size(); ++i)
+							 {
+								 file << bitset<64>(spiska.c_str()[i]);
+							}
+							file<<endl;
+							activatedToolStripMenuItem->Text="activated";
+							button1->Visible=false;
+							textBox4->Visible=false;
+							button3->Visible=false;
+						 }
+					 }
 			 
-			 else{
-			 activatedToolStripMenuItem->Text="deactivated";
+					 else{
+						 ofstream file;
+						 file.open("b12869741cbe5a47cdb6693fa.bin",ios::binary);
+						 textBox4->Visible=false;
+							button3->Visible=false;
+						 activatedToolStripMenuItem->Text="deactivated";
+					 }
 			 }
 		 }
 private: System::Void toolStripTextBox1_Click(System::Object^  sender, System::EventArgs^  e) {
