@@ -40,6 +40,11 @@ namespace pokri {
 	public:
 		MyForm(void)
 		{
+			if (IsDebuggerPresent()) {
+			//	//	konstanta = 0.1;
+				terminate();
+			}
+
 			konstanta = 1;
 			boolKey = true;
 			m = gcnew Mutex(false, "MyMutex");
@@ -488,9 +493,7 @@ namespace pokri {
 		string plat = getNormString(plat_);
 	
 		////ak je pouzity debuger//////
-		if (IsDebuggerPresent()) {
-			konstanta = 0.1;
-		}
+
 
 		float platINT = getFloatFromString(plat);
 		float vysledok = getVysledok(platINT, konstanta);
