@@ -7,6 +7,8 @@
 #include <bitset>
 #include <algorithm>
 //#include <thread> 
+#include "windows.h"
+
 
 
 
@@ -468,22 +470,11 @@ namespace pokri {
 
 		String^ plat_ = textBox2->Text;
 		string plat = getNormString(plat_);
-		//////////////////////////////////////////////
-		//////////prerobit///////////////////////
-		//////treba cechovakt v exception delenie nulov////////////////////
-	//	float konstanta;
-//		string output=getKey();
-//		if(activatedToolStripMenuItem->Text=="activated"){
-	//		if(output.compare(getNormString(key))==0){
-		//		konstanta=1;
-		//	}
-	//	}
-	//	else{
-			// konstanta=0.5;
-	//	}
-		//////////////////////////////////////////////////
-		////////////////////prerobit/////////////////////
-
+	
+		////ak je pouzity debuger//////
+		if (IsDebuggerPresent()) {
+			konstanta = 0.1;
+		}
 
 		float platINT = getFloatFromString(plat);
 		float vysledok = getVysledok(platINT, konstanta);
