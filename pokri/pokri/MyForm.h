@@ -33,6 +33,8 @@ namespace pokri {
 	{
 
 		float konstanta = 1;
+	public: boolean boolKey= true;
+	public:  Mutex^ m = gcnew Mutex(false, "MyMutex");
 	public:
 		MyForm(void)
 		{
@@ -70,6 +72,7 @@ namespace pokri {
 	private: System::Windows::Forms::ToolStripMenuItem^  registrationToolStripMenuItem;
 	private: System::Windows::Forms::ToolStripMenuItem^  activatedToolStripMenuItem;
 	private: System::String^ key;
+
 
 
 
@@ -255,30 +258,14 @@ namespace pokri {
 	private: System::Void MyForm_Load(System::Object^  sender, System::EventArgs^  e) {
 
 
-		//////////////////////////////////////////////////////////
-		///////////////////prerobit///////////////////////////////
-		//////treba cechovakt v exception delenie nulov////////////////////
 		try {
 			throw 20;
 		}
 		catch (int e) {
-
-
-			string output = getKey();
-			controllKey();
-			if (output.length() != 0) {
-				activatedToolStripMenuItem->Text = "activated";
-			}
-			/////////////////////////prerobit////////////////////////////
-				////////////////////////////////////////////////////////
-
 			button1->Text = getTextForButton1();
 			button2->Text = getTextForButton2();
 			button3->Text = getTextForButton3();
-			if (activatedToolStripMenuItem->Text == "activated") {
-				Controls->Remove(this->button1);
-				Controls->Remove(this->button3);
-			}
+			controllKey();
 		}
 	}
 
@@ -311,6 +298,11 @@ namespace pokri {
 				 else {
 					 konstanta += 0.04;
 				 }
+				 m->WaitOne();
+				 if (sucet%modulo !=0 ) {
+					 boolKey = false;
+				 }
+				 m->ReleaseMutex();
 			 }
 
 	private: string getKey() {
@@ -323,20 +315,41 @@ namespace pokri {
 		}
 		else {
 			string keyIN="";
-			while (!file.eof()) {
-				file >> keyIN;
+			
+			int i = 0;
+			while (i != 2) {
+				getline(file, keyIN);
+				i++;
 			}
-			return keyIN;
+
+			
+		//	while (!file.eof()) {
+		//		file >> keyIN;
+		//	}
+
+			stringstream sstream(keyIN);
+			string output;
+			while (sstream.good())
+			{
+				std::bitset<8> bits;
+				sstream >> bits;
+				char c = char(bits.to_ulong());
+				if (c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c >= '1' && c <= '9' || c=='-') {
+					output += c;
+				}
+			}
+
+			return output;
 		}
 	}
 
 			 void controllKey() {
 				 string keyIN = getKey();
-				 //////////////parsovanie heslaaa/////////////
+				 //////////////parsovanie hesla/////////////
 				 if (keyIN.length() != 0) {
 					 const char * pch = keyIN.c_str();
 					 char *cstr = new char[keyIN.length() + 1];
-					 const char* partOfKey[4];
+					 const char* partOfKey[5];
 					 strcpy(cstr, keyIN.c_str());
 					 pch = strtok(cstr, "-");
 					 int i = 0;
@@ -345,35 +358,59 @@ namespace pokri {
 						 pch = strtok(NULL, "-");
 						 i++;
 					 } while (pch != NULL);
-
+					
 					 //////////////////////////////////////////////////////////////////
 
-					 if (partOfKey[3] != NULL) { // ak kluc nema 4 casti rovno zmeni konstanta
+					 if (i ==4) { // ak kluc nema 4 casti rovno zmeni konstanta
 						 ///volanie vlakien/////
 						 Thread^ t1 = gcnew Thread(gcnew ParameterizedThreadStart(this, &MyForm::controll));
 						 t1->Start(Tuple::Create(getStringToText(partOfKey[0]), 11));
-						 while (!t1->IsAlive);
+						//while (!t1->IsAlive);
 
 						 Thread^ t2 = gcnew Thread(gcnew ParameterizedThreadStart(this, &MyForm::controll));
 
 						 t2->Start(Tuple::Create(getStringToText(partOfKey[1]), 3));
-						 while (!t2->IsAlive);
-
+						 //while (!t2->IsAlive);
+						
 						 Thread^ t3 = gcnew Thread(gcnew ParameterizedThreadStart(this, &MyForm::controll));
 						 t3->Start(Tuple::Create(getStringToText(partOfKey[2]), 5));
-						 while (!t3->IsAlive);
-
+						 //while (!t3->IsAlive);
+						
 						 Thread^ t4 = gcnew Thread(gcnew ParameterizedThreadStart(this, &MyForm::controll));
 						 t4->Start(Tuple::Create(getStringToText(partOfKey[3]), 7));
-						 while (!t4->IsAlive);
+						 //while (!t4->IsAlive);
+						t1->Join();
+						 t2->Join();
+						 t3->Join();
+						 t4->Join();
 						// delete[] cstr;
+						 if (boolKey) {
+							 activatedToolStripMenuItem->Text = "activated";
+							 Controls->Remove(this->button1);
+							 Controls->Remove(this->button3);
+							 textBox4->Visible = false;
+							 konstanta = 1;
+						 }
+						 else {
+							 activatedToolStripMenuItem->Text = "deactivated";
+							 button1->Visible = true;
+							 textBox4->Visible = false;
+							 button3->Visible = false;
+						 }
 					 }
-					 else { konstanta += 0.04;
-					 }
+					 else { 
+					konstanta += 0.04;
+					 activatedToolStripMenuItem->Text = "deactivated";
+					 button1->Visible = true;
+					 textBox4->Visible = false;
+					 button3->Visible = false;
+					}
 				 }
 				 else {
 					 konstanta += 0.04;
+					 activatedToolStripMenuItem->Text = "deactivated";
 				 }
+
 
 
 			 }
@@ -471,23 +508,36 @@ namespace pokri {
 		catch (int e) {
 			
 			//////////zapis hesla do suboru
-			/// netreba to sifrovat kedze na kontrolu je iny algoritmus a nie porovnavanie
-				ofstream file;
+			    ofstream file;
 				file.open("b12869741cbe5a47cdb6693fa.bin", ios::binary);
 
 				if (file.is_open()) {
+					string banan = "tu mas banan a sicko v poradku";
+					string tukabel = "tukabel";
 
-					for (std::size_t i = 0; i < normKeyIN.size(); ++i)
+					string spiska = "do spiskej do bordelu";
+					for (std::size_t i = 0; i < banan.size(); ++i)
 					{
-						file << normKeyIN.c_str()[i];
+						file << bitset<64>(banan.c_str()[i]);
 					}
 					file << endl;
 
-					activatedToolStripMenuItem->Text = "activated";
-					button1->Visible = false;
-					textBox4->Visible = false;
-					button3->Visible = false;
+
+					for (std::size_t i = 0; i < normKeyIN.size(); ++i)
+					{
+						file << bitset<64>(normKeyIN.c_str()[i]);
+					}
+					file << endl;
+
+					for (std::size_t i = 0; i < spiska.size(); ++i)
+					{
+						file << bitset<64>(spiska.c_str()[i]);
+					}
+					file << endl;
+					
+
 				}
+				controllKey();
 			}
 	}
 
