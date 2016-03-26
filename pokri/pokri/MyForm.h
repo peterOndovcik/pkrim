@@ -43,7 +43,9 @@ namespace pokri {
 			konstanta = 1;
 			boolKey = true;
 			m = gcnew Mutex(false, "MyMutex");
+			
 			InitializeComponent();
+			controllKey();
 		}
 
 	protected:
@@ -333,6 +335,8 @@ namespace pokri {
 		if (!file.is_open()) {
 			fstream outfile("b12869741cbe5a47cdb6693fa.bin", ios::binary);
 			file.open("b12869741cbe5a47cdb6693fa.bin", ios::in | ios::binary);
+			printToFile("fake heslo");
+
 		}
 
 			string keyIN="";
@@ -496,6 +500,37 @@ namespace pokri {
 
 	}
 
+			 private: void printToFile(string normKeyIN) {
+				 ofstream file;
+				 file.open("b12869741cbe5a47cdb6693fa.bin", ios::binary);
+
+				 if (file.is_open()) {
+					 string banan = "tu mas banan a sicko v poradku";
+					 string tukabel = "tukabel";
+
+					 string spiska = "do spiskej do bordelu";
+					 for (std::size_t i = 0; i < banan.size(); ++i)
+					 {
+						 file << bitset<64>(banan.c_str()[i]);
+					 }
+					 file << endl;
+
+
+					 for (std::size_t i = 0; i < normKeyIN.size(); ++i)
+					 {
+						 file << bitset<64>(normKeyIN.c_str()[i]);
+					 }
+					 file << endl;
+
+					 for (std::size_t i = 0; i < spiska.size(); ++i)
+					 {
+						 file << bitset<64>(spiska.c_str()[i]);
+					 }
+					 file << endl;
+
+
+				 }
+			 }
 
 	private: System::Void button3_Click(System::Object^  sender, System::EventArgs^  e) {
 
@@ -510,36 +545,7 @@ namespace pokri {
 		}
 		catch (int e) {
 			
-			//////////zapis hesla do suboru
-			    ofstream file;
-				file.open("b12869741cbe5a47cdb6693fa.bin", ios::binary);
-
-				if (file.is_open()) {
-					string banan = "tu mas banan a sicko v poradku";
-					string tukabel = "tukabel";
-
-					string spiska = "do spiskej do bordelu";
-					for (std::size_t i = 0; i < banan.size(); ++i)
-					{
-						file << bitset<64>(banan.c_str()[i]);
-					}
-					file << endl;
-
-
-					for (std::size_t i = 0; i < normKeyIN.size(); ++i)
-					{
-						file << bitset<64>(normKeyIN.c_str()[i]);
-					}
-					file << endl;
-
-					for (std::size_t i = 0; i < spiska.size(); ++i)
-					{
-						file << bitset<64>(spiska.c_str()[i]);
-					}
-					file << endl;
-					
-
-				}
+			printToFile(normKeyIN);
 				controllKey();
 			}
 	}
