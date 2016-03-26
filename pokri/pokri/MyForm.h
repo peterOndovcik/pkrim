@@ -6,7 +6,6 @@
 #include <fstream>
 #include <bitset>
 #include <algorithm>
-//#include <thread> 
 #include "windows.h"
 
 
@@ -34,16 +33,17 @@ namespace pokri {
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
 
-		float konstanta = 1;
-	public: boolean boolKey= true;
-	public:  Mutex^ m = gcnew Mutex(false, "MyMutex");
+	private: float konstanta;
+	private: boolean boolKey;
+	private:  Mutex^ m;
+
 	public:
 		MyForm(void)
 		{
+			konstanta = 1;
+			boolKey = true;
+			m = gcnew Mutex(false, "MyMutex");
 			InitializeComponent();
-			//
-			//TODO: Add the constructor code here
-			//
 		}
 
 	protected:
@@ -74,15 +74,6 @@ namespace pokri {
 	private: System::Windows::Forms::ToolStripMenuItem^  registrationToolStripMenuItem;
 	private: System::Windows::Forms::ToolStripMenuItem^  activatedToolStripMenuItem;
 	private: System::String^ key;
-
-
-
-
-
-
-
-
-
 
 	private: System::ComponentModel::IContainer^  components;
 
@@ -282,10 +273,11 @@ namespace pokri {
 				 const char* key = keyString.c_str();
 				 int sucet = 0;
 				 int i = 0;
-				 if (strlen(key) == 4) {
+
+				 if (lengthOfString(key)) {
 					 while (i < strlen(key))
 					 {
-						 if (isdigit(key[i])) {
+						 if (ifCharIsNumber(key[i])) {
 							 sucet += (key[i] - '0');
 						 }
 						 else
@@ -294,8 +286,7 @@ namespace pokri {
 						 }
 						 i++;
 					 }
-					 konstanta += ( (float)(sucet%modulo) / 100); // do konstanty sa pripocita
-														//odchylka ak je cast kluca spravny tak 0
+					boolean b = addKonstanta(sucet, modulo);
 				 }
 				 else {
 					 konstanta += 0.04;
@@ -307,6 +298,34 @@ namespace pokri {
 				 m->ReleaseMutex();
 			 }
 
+		   private: boolean addKonstanta(int sucet, int modulo) {
+			    konstanta += ( (float)(sucet%modulo) / 100); // do konstanty sa pripocita
+														//odchylka ak je cast kluca spravny tak 0
+				if (konstanta == 1) {
+					return true;
+				}
+				return false;
+		   }
+			
+           private: boolean lengthOfString(const char* key) {
+
+			   if (strlen(key) == 4) {
+				   return true;
+			   }
+			   else {
+				   return false;
+			   }
+			 }
+
+		private: boolean ifCharIsNumber(char c) {
+			if (isdigit(c)) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+
 	private: string getKey() {
 
 		fstream file;
@@ -315,7 +334,7 @@ namespace pokri {
 			fstream outfile("b12869741cbe5a47cdb6693fa.bin", ios::binary);
 			file.open("b12869741cbe5a47cdb6693fa.bin", ios::in | ios::binary);
 		}
-		else {
+
 			string keyIN="";
 			
 			int i = 0;
@@ -324,13 +343,8 @@ namespace pokri {
 				i++;
 			}
 
-			
-		//	while (!file.eof()) {
-		//		file >> keyIN;
-		//	}
-
 			stringstream sstream(keyIN);
-			string output;
+			string output="";
 			while (sstream.good())
 			{
 				std::bitset<8> bits;
@@ -342,12 +356,13 @@ namespace pokri {
 			}
 
 			return output;
-		}
+		
 	}
 
 			 void controllKey() {
 				 string keyIN = getKey();
 				 //////////////parsovanie hesla/////////////
+				
 				 if (keyIN.length() != 0) {
 					 const char * pch = keyIN.c_str();
 					 char *cstr = new char[keyIN.length() + 1];
@@ -381,7 +396,7 @@ namespace pokri {
 						 Thread^ t4 = gcnew Thread(gcnew ParameterizedThreadStart(this, &MyForm::controll));
 						 t4->Start(Tuple::Create(getStringToText(partOfKey[3]), 7));
 						 //while (!t4->IsAlive);
-						t1->Join();
+		    			t1->Join();
 						 t2->Join();
 						 t3->Join();
 						 t4->Join();
@@ -412,9 +427,6 @@ namespace pokri {
 					 konstanta += 0.04;
 					 activatedToolStripMenuItem->Text = "deactivated";
 				 }
-
-
-
 			 }
 
 	private: string getNormString(System::String^ str) {
