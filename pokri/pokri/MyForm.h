@@ -6,12 +6,18 @@
 #include <fstream>
 #include <bitset>
 #include <algorithm>
+//#include <thread> 
+#include "windows.h"
+
+
 
 
 using namespace std;
+using namespace System::Threading;
 
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <msclr\marshal_cppstd.h>
 namespace pokri {
 
@@ -27,6 +33,10 @@ namespace pokri {
 	/// </summary>
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
+
+	 public: float konstanta;
+	public:	 boolean boolKey;
+	public:  Mutex^ m;
 	public:
 		MyForm(void)
 		{
@@ -34,6 +44,10 @@ namespace pokri {
 			//
 			//TODO: Add the constructor code here
 			//
+			
+		 konstanta = 1;
+		 boolKey= true;
+		 m = gcnew Mutex(false, "MyMutex");
 		}
 
 	protected:
@@ -63,19 +77,12 @@ namespace pokri {
 	private: System::Windows::Forms::ToolStripMenuItem^  contactToolStripMenuItem;
 	private: System::Windows::Forms::ToolStripMenuItem^  registrationToolStripMenuItem;
 	private: System::Windows::Forms::ToolStripMenuItem^  activatedToolStripMenuItem;
-	private: System::String^ key;	
-
-
-
-
-
-
-
-
+	private: System::String^ key;
+   
 
 	private: System::ComponentModel::IContainer^  components;
 
-	protected: 
+	protected:
 
 	private:
 		/// <summary>
@@ -90,6 +97,9 @@ namespace pokri {
 		/// </summary>
 		void InitializeComponent(void)
 		{
+			
+	
+			///////////////////////////////
 			this->button1 = (gcnew System::Windows::Forms::Button());
 			this->label2 = (gcnew System::Windows::Forms::Label());
 			this->textBox2 = (gcnew System::Windows::Forms::TextBox());
@@ -179,7 +189,7 @@ namespace pokri {
 			// 
 			// menuStrip1
 			// 
-			this->menuStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(1) {this->HELPStripMenuItem});
+			this->menuStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(1) { this->HELPStripMenuItem });
 			this->menuStrip1->Location = System::Drawing::Point(0, 0);
 			this->menuStrip1->Name = L"menuStrip1";
 			this->menuStrip1->Size = System::Drawing::Size(568, 24);
@@ -190,8 +200,10 @@ namespace pokri {
 			// HELPStripMenuItem
 			// 
 			this->HELPStripMenuItem->Alignment = System::Windows::Forms::ToolStripItemAlignment::Right;
-			this->HELPStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {this->contactToolStripMenuItem, 
-				this->registrationToolStripMenuItem});
+			this->HELPStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {
+				this->contactToolStripMenuItem,
+					this->registrationToolStripMenuItem
+			});
 			this->HELPStripMenuItem->Name = L"HELPStripMenuItem";
 			this->HELPStripMenuItem->RightToLeft = System::Windows::Forms::RightToLeft::Yes;
 			this->HELPStripMenuItem->Size = System::Drawing::Size(47, 20);
@@ -205,7 +217,7 @@ namespace pokri {
 			// 
 			// registrationToolStripMenuItem
 			// 
-			this->registrationToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(1) {this->activatedToolStripMenuItem});
+			this->registrationToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(1) { this->activatedToolStripMenuItem });
 			this->registrationToolStripMenuItem->Name = L"registrationToolStripMenuItem";
 			this->registrationToolStripMenuItem->Size = System::Drawing::Size(134, 22);
 			this->registrationToolStripMenuItem->Text = L"registration";
@@ -242,198 +254,292 @@ namespace pokri {
 			this->PerformLayout();
 
 		}
-		
+
 #pragma endregion
 	private: System::Void MyForm_Load(System::Object^  sender, System::EventArgs^  e) {
-				 	
-			
-			
-				//////////////////////////////////////////////////////////
-				///////////////////prerobit///////////////////////////////
-				//////treba cechovakt v exception delenie nulov////////////////////
-				 string output=getKey();
-				if(output.compare(getNormString(key))==0){
-					activatedToolStripMenuItem->Text="activated";
-				}
-			/////////////////////////prerobit////////////////////////////
-				////////////////////////////////////////////////////////
-			
 
-			button1->Text=getTextForButton1();
-			button2->Text=getTextForButton2();
-			button3->Text=getTextForButton3();
-			if(activatedToolStripMenuItem->Text=="activated"){
-				Controls->Remove(this->button1);
-				Controls->Remove(this->button3);
-			}
-			 
+		try {
+			throw 20;
+		}
+		catch (int e) {
+			button1->Text = getTextForButton1();
+			button2->Text = getTextForButton2();
+			button3->Text = getTextForButton3();
+			controllKey();
+
+		}
+	}
+
+
+
+			 ////////////kontrola ci sucet casti hesla modulo dane cislo je 0,
+			 ///////////ak nie ovplyvni to konstantu na vypocet - funkcia bezi vo vlakne
+			 void controll(Object^ object) {
+				 auto args = safe_cast<Tuple<String^, int>^>(object);			
+				 int modulo = args->Item2;
+				 string keyString = getNormString(args->Item1);
+	 
+				 const char* key = keyString.c_str();
+				 int sucet = 0;
+				 int i = 0;
+				 if (strlen(key) == 4) {
+					 while (i < strlen(key))
+					 {
+						 if (isdigit(key[i])) {
+							 sucet += (key[i] - '0');
+						 }
+						 else
+						 {
+							 sucet += key[i];
+						 }
+						 i++;
+					 }
+					 konstanta += ( (float)(sucet%modulo) / 100); // do konstanty sa pripocita
+														//odchylka ak je cast kluca spravny tak 0
+				 }
+				 else {
+					 konstanta += 0.04;
+				 }
+				 m->WaitOne();
+				 if (sucet%modulo !=0 ) {
+					 boolKey = false;
+				 }
+				 m->ReleaseMutex();
 			 }
-	private: string getKey(){
-				
-			fstream file;
-			file.open("b12869741cbe5a47cdb6693fa.bin", ios::in |  ios::binary);
-			if(!file.is_open()){
-				fstream outfile ("b12869741cbe5a47cdb6693fa.bin", ios::binary);
-				return NULL;
+
+	private: string getKey() {
+
+		fstream file;
+		file.open("b12869741cbe5a47cdb6693fa.bin", ios::in | ios::binary);
+		if (!file.is_open()) {
+			printToFile("fejkovy-kluc");
+			return "prd";
+		}
+		else {
+			string keyIN="";
+			
+			int i = 0;
+			while (i != 2) {
+				getline(file, keyIN);
+				i++;
 			}
-			else{
-				string keyIN;
-				int i=0;
-				while(i!=2){
-					getline(file, keyIN);
-					i++;
-				}
-				
-				
-				stringstream sstream(keyIN);
-				string output;
-				while(sstream.good())
-				{
-					std::bitset<8> bits;
-					sstream >> bits;
-					char c = char(bits.to_ulong());
-					if( c >= 'A' && c<='Z' || c>='1' && c<='9'){
+			stringstream sstream(keyIN);
+			string output="";
+			while (sstream.good())
+			{
+				std::bitset<8> bits;
+				sstream >> bits;
+				char c = char(bits.to_ulong());
+				if (c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c >= '1' && c <= '9' || c=='-') {
 					output += c;
-					}
 				}
-				return output;
+			}
+
+			return output;
+			}
+
+	
+		
+	}
+
+			 void controllKey() {
+				 string keyIN = getKey();
+				 //////////////parsovanie hesla/////////////
+				 if (keyIN.length() != 0) {
+					 const char * pch = keyIN.c_str();
+					 char *cstr = new char[keyIN.length() + 1];
+					 const char* partOfKey[5];
+					 strcpy(cstr, keyIN.c_str());
+					 pch = strtok(cstr, "-");
+					 int i = 0;
+					 do {
+						 partOfKey[i] = pch; ///// v partOfKey su casti hesla ktore boli rozdelene pomlckami
+						 pch = strtok(NULL, "-");
+						 i++;
+					 } while (pch != NULL);
+					
+					 //////////////////////////////////////////////////////////////////
+
+					 if (i ==4) { // ak kluc nema 4 casti rovno zmeni konstanta
+						 ///volanie vlakien/////
+						 Thread^ t1 = gcnew Thread(gcnew ParameterizedThreadStart(this, &MyForm::controll));
+						 t1->Start(Tuple::Create(getStringToText(partOfKey[0]), 11));
+						//while (!t1->IsAlive);
+
+						 Thread^ t2 = gcnew Thread(gcnew ParameterizedThreadStart(this, &MyForm::controll));
+
+						 t2->Start(Tuple::Create(getStringToText(partOfKey[1]), 3));
+						 //while (!t2->IsAlive);
+						
+						 Thread^ t3 = gcnew Thread(gcnew ParameterizedThreadStart(this, &MyForm::controll));
+						 t3->Start(Tuple::Create(getStringToText(partOfKey[2]), 5));
+						 //while (!t3->IsAlive);
+						
+						 Thread^ t4 = gcnew Thread(gcnew ParameterizedThreadStart(this, &MyForm::controll));
+						 t4->Start(Tuple::Create(getStringToText(partOfKey[3]), 7));
+						 //while (!t4->IsAlive);
+						t1->Join();
+						 t2->Join();
+						 t3->Join();
+						 t4->Join();
+						// delete[] cstr;
+						 if (boolKey) {
+							 activatedToolStripMenuItem->Text = "activated";
+							 Controls->Remove(this->button1);
+							 Controls->Remove(this->button3);
+							 textBox4->Visible = false;
+							 konstanta = 1;
+						 }
+						 else {
+							 activatedToolStripMenuItem->Text = "deactivated";
+							 button1->Visible = true;
+							 textBox4->Visible = false;
+							 button3->Visible = false;
+						 }
+					 }
+					 else { 
+					konstanta += 0.04;
+					 activatedToolStripMenuItem->Text = "deactivated";
+					 button1->Visible = true;
+					 textBox4->Visible = false;
+					 button3->Visible = false;
+					}
+				 }
+				 else {
+					 konstanta += 0.04;
+					 activatedToolStripMenuItem->Text = "deactivated";
+				 }
+
+
+
 			 }
+
+	private: string getNormString(System::String^ str) {
+		string stringNormal = msclr::interop::marshal_as<string>(str);
+		return stringNormal;
+	}
+	private: String^ getTextForButton1() {
+		return "Zaregi" + getTextForButton1a();
+	}
+	private: String^ getTextForButton1a() {
+		return "strovaù";
+	}
+	private: String^ getTextForButton2() {
+		return "Vypo" + getTextForButton2a();
+	}
+	private: String^ getTextForButton2a() {
+		return "ËÌtaù";
+	}
+	private: String^ getTextForButton3() {
+		return "Akti" + getTextForButton3a();
+	}
+	private: String^ getTextForButton3a() {
+		return "vovaù";
+	}
+
+	private: System::String^ getStringToText(string str) {
+		String^ myString = msclr::interop::marshal_as<System::String^>(str);
+		return myString;
+	}
+	private: float getFloatFromString(string str) {
+		istringstream buffer(str);
+		float val;
+		buffer >> val;
+		return val;
+	}
+	private: string getStringFromFloat(float val) {
+		string str = to_string(val);
+		return str;
+	}
+	private: float getVysledok(float plat, float konstanta) {
+
+		float dan = 0.079;
+		float odvody = 0.134;
+		float vysledok = (plat - ((plat*dan) + (plat*odvody)))*konstanta;
+		return vysledok;
+	}
+	private: System::Void button1_Click(System::Object^  sender, System::EventArgs^  e) {
+		textBox4->Visible = true;
+		button3->Visible = true;
+	}
+	private: System::Void button2_Click(System::Object^  sender, System::EventArgs^  e) {
+
+
+		String^ plat_ = textBox2->Text;
+		string plat = getNormString(plat_);
+	
+		////ak je pouzity debuger//////
+	//	if (IsDebuggerPresent()) {
+	//		konstanta = 0.1;
+	//	}
+
+		float platINT = getFloatFromString(plat);
+		float vysledok = getVysledok(platINT, konstanta);
+		string strVysledok = getStringFromFloat(vysledok);
+		String^ myString = getStringToText(strVysledok);
+		textBox3->Text = myString;
 
 	}
-	private: string getNormString(System::String^ str){
-				 string stringNormal = msclr::interop::marshal_as<string>(str);
-				 return stringNormal;
-			 }
-	private: String^ getTextForButton1(){
-				return "Zaregi"+ getTextForButton1a();
-			 }
-   private: String^ getTextForButton1a(){
-				return "strovaù";
-			}
-   private: String^ getTextForButton2(){
-				return "Vypo"+getTextForButton2a();
-			 }
-	private: String^ getTextForButton2a(){
-				return "ËÌtaù";
-			 }
-	private: String^ getTextForButton3(){
-				return "Akti"+getTextForButton3a();
-			 }
-	private: String^ getTextForButton3a(){
-				return "vovaù";
-			 }
-	
-	private: System::String^ getStringToText(string str){
-			 String^ myString = msclr::interop::marshal_as<System::String^>(str);
-			 return myString;
-			 }
-	private: float getFloatFromString(string str){
-			 istringstream buffer(str);
-			 float val;
-				buffer >> val;
-			 return val;
-			 }
-	private: string getStringFromFloat(float val){
-			  string str=to_string(val);
-			  return str;
-			 }
-   private: float getVysledok(float plat, float konstanta){
-				
-				float dan= 0.079;
-				float odvody=0.134;
-				float vysledok=(plat-((plat*dan)+(plat*odvody)))*konstanta;
-				return vysledok;
-			}
-	private: System::Void button1_Click(System::Object^  sender, System::EventArgs^  e) {
-				 textBox4->Visible=true;
-				 button3->Visible=true;
-			 }
-	private: System::Void button2_Click(System::Object^  sender, System::EventArgs^  e) {
-				
-				
-				String^ plat_=textBox2->Text;
-				string plat = getNormString(plat_);
-				//////////////////////////////////////////////
-				//////////prerobit///////////////////////
-				//////treba cechovakt v exception delenie nulov////////////////////
-				float konstanta;
-				string output=getKey();
-				if(activatedToolStripMenuItem->Text=="activated"){
-					if(output.compare(getNormString(key))==0){
-						konstanta=1;
-					}
-				}
-				else{
-					 konstanta=0.5;
-				}
-				//////////////////////////////////////////////////
-				////////////////////prerobit/////////////////////
 
-				
-				float platINT= getFloatFromString(plat);
-				float vysledok=getVysledok(platINT,konstanta);
-				string strVysledok=getStringFromFloat(vysledok);
-				String^ myString = getStringToText(strVysledok);
-				textBox3->Text=myString;
-				
-			 }
-
-
-private: System::Void button3_Click(System::Object^  sender, System::EventArgs^  e) {
-			 
-			 String^ keyIN = textBox4->Text;
-			 string normKeyIN= getNormString(keyIN);
-			 
-			 //////////////////////////////////////////////
-			 //////////////prerobit//////////////////////
-			 //////treba cechovakt v exception delenie nulov////////////////////
-
-			 if(normKeyIN.compare(getNormString(key))==0){
-			
-			/////////////prerobit///////////////////////////
-			//////////////////////////////////////////////////////
-			
+	private: void printToFile(string normKeyIN){
 				 ofstream file;
-				 file.open("b12869741cbe5a47cdb6693fa.bin",ios::binary);
-				 
-				 if(file.is_open()){
-					 string banan="tu mas banan a sicko v poradku";
-					 string tukabel="tukabel";
-					 
-					 string spiska="do spiskej do bordelu";
-					 for (std::size_t i = 0; i < banan.size(); ++i)
-					 {
-						 file << bitset<64>(banan.c_str()[i]);
+				file.open("b12869741cbe5a47cdb6693fa.bin", ios::binary);
+			 if (file.is_open()) {
+					string banan = "tu mas banan a sicko v poradku";
+					string tukabel = "tukabel";
+
+					string spiska = "do spiskej do bordelu";
+					for (std::size_t i = 0; i < banan.size(); ++i)
+					{
+						file << bitset<64>(banan.c_str()[i]);
 					}
-					file<<endl;
+					file << endl;
+
+
 					for (std::size_t i = 0; i < normKeyIN.size(); ++i)
-					 {
-						 file << bitset<64>(normKeyIN.c_str()[i]);
+					{
+						file << bitset<64>(normKeyIN.c_str()[i]);
 					}
-					file<<endl;
+					file << endl;
+
 					for (std::size_t i = 0; i < spiska.size(); ++i)
-					 {
-						 file << bitset<64>(spiska.c_str()[i]);
+					{
+						file << bitset<64>(spiska.c_str()[i]);
 					}
-					file<<endl;
-					activatedToolStripMenuItem->Text="activated";
-					button1->Visible=false;
-					textBox4->Visible=false;
-					button3->Visible=false;
-				 }
+					file << endl;
+					file.close();
+
+				}
 			 }
-			 
-			 else{
-			 activatedToolStripMenuItem->Text="deactivated";
-			 }
-		 }
-private: System::Void toolStripTextBox1_Click(System::Object^  sender, System::EventArgs^  e) {
-		 }
-private: System::Void contextMenuStrip1_Opening(System::Object^  sender, System::ComponentModel::CancelEventArgs^  e) {
-		 }
-private: System::Void menuStrip1_ItemClicked(System::Object^  sender, System::Windows::Forms::ToolStripItemClickedEventArgs^  e) {
-		 }
-private: System::Void registrationToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
-		 }
-};
+
+	private: System::Void button3_Click(System::Object^  sender, System::EventArgs^  e) {
+
+		String^ keyIN = textBox4->Text;
+		string normKeyIN = getNormString(keyIN);
+
+		//////////////////////////////////////////////
+		//////////////prerobit//////////////////////
+		//////treba cechovakt v exception delenie nulov////////////////////
+		try {
+			throw 20;
+		}
+		catch (int e) {
+			
+			//////////zapis hesla do suboru
+				printToFile(normKeyIN);
+				controllKey();
+			}
+	}
+
+
+
+	private: System::Void toolStripTextBox1_Click(System::Object^  sender, System::EventArgs^  e) {
+	}
+	private: System::Void contextMenuStrip1_Opening(System::Object^  sender, System::ComponentModel::CancelEventArgs^  e) {
+	}
+	private: System::Void menuStrip1_ItemClicked(System::Object^  sender, System::Windows::Forms::ToolStripItemClickedEventArgs^  e) {
+	}
+	private: System::Void registrationToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
+	}
+	};
 }
